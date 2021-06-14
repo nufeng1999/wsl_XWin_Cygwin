@@ -1,0 +1,3 @@
+[submodule "cygwin-auto-install"]
+	path = cygwin-auto-install
+	url = git://github.com/nufeng74/cygwin-auto-install.git
