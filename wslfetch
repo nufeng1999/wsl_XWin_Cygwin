@@ -1,0 +1,501 @@
+#!/bin/bash
+# wslu - Windows 10 linux Subsystem Utility
+# Component of Windows 10 linux Subsystem Utility
+# <https://github.com/wslutilities/wslu>
+# Copyright (C) 2019 Patrick Wu
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Version
+wslu_version=2.3.6
+
+# Speed up script by not using unicode.
+LC_ALL=C
+LANG=C
+
+# force bash to not showing code manually.
+set +x
+
+# checking interopability
+grep enabled /proc/sys/fs/binfmt_misc/WSLInterop >/dev/null || (echo "WSL Interopability is disabled. Please enable it before using WSL."; exit 1)
+
+# variables
+## color
+black=$(echo -e '\e[30m')
+red=$(echo -e '\e[31m')
+green=$(echo -e '\e[32m')
+brown=$(echo -e '\e[33m')
+blue=$(echo -e '\e[34m')
+purple=$(echo -e '\e[35m')
+cyan=$(echo -e '\e[36m')
+yellow=$(echo -e '\e[1;33m')
+white=$(echo -e '\e[1;37m')
+dark_gray=$(echo -e '\e[1;30m')
+light_red=$(echo -e '\e[1;31m')
+light_green=$(echo -e '\e[1;32m')
+light_blue=$(echo -e '\e[1;34m')
+light_purple=$(echo -e '\e[1;35m')
+light_cyan=$(echo -e '\e[1;36m')
+light_gray=$(echo -e '\e[37m')
+orange=$(echo -e '\e[38;5;202m')
+light_orange=$(echo -e '\e[38;5;214m')
+bold=$(echo -e '\033[1m')
+reset=$(echo -e '\033(B\033[m')
+
+## indicator
+info="${green}[info]${reset}"
+input_info="${cyan}[input]${reset}"
+error="${red}[error]${reset}"
+warn="${orange}[warn]${reset}"
+debug="${orange}${bold}[debug]${reset}"
+
+## Windows build number constant
+readonly BN_SPR_CREATORS=15063		#1703, Redstone 2, Creators Update
+readonly BN_FAL_CREATORS=16299		#1709, Redstone 3, Fall Creators Update
+readonly BN_APR_EIGHTEEN=17134		#1803, Redstone 4, April 2018 Update
+readonly BN_OCT_EIGHTEEN=17763		#1809, Redstone 5, October 2018 Update
+readonly BN_MAY_NINETEEN=18362		#1903, 19H1, May 2019 Update
+
+# functions
+
+function help {
+	app_name=$(basename "$1")
+	echo -e "$app_name - Part of wslu, a collection of utilities for Windows 10 Windows Subsystem for Linux
+Usage: $2
+
+For more help for $app_name, visit the following site: https://github.com/wslutilities/wslu/wiki/$app_name"
+}
+
+function double_dash_p {
+	echo "${@//\\/\\\\}"
+}
+
+function interop_prefix {
+	if [ -f /etc/wsl.conf ]; then
+		tmp=$(awk -F '=' '/root/ {print $2}' /etc/wsl.conf | awk '{$1=$1;print}')
+		if [ "$tmp" == "" ]; then
+			echo "/mnt/"
+		else
+			echo "$tmp"
+		fi
+	else
+		echo "/mnt/"
+	fi
+}
+
+function chcp_com {
+	"$(interop_prefix)"c/Windows/System32/chcp.com "$@" >/dev/null
+}
+
+function winps_exec {
+	chcp_com $(cat ~/.config/wslu/oemcp)
+	"$(interop_prefix)"c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -NonInteractive -Command "$@"
+	chcp_com 65001
+}
+
+function baseexec_gen {
+	wslutmpbuild=$("$(interop_prefix)"c/Windows/System32/reg.exe query "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion" /v CurrentBuild | tail -n 2 | head -n 1 | sed -e 's|\r||g')
+	wslutmpbuild=${wslutmpbuild##* }
+	wslutmpbuild="$(( $wslutmpbuild + 0 ))"
+	if [ $wslutmpbuild -ge $BN_MAY_NINETEEN ]; then
+		# The environment variable only available in 19H1 or later.
+		wslu_distro_regpath=$("$(interop_prefix)"c/Windows/System32/reg.exe query "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lxss" /s /f DistributionName 2>&1 | sed -e 's|\r||g' | grep -B1 -e "$WSL_DISTRO_NAME$" | head -n1 )
+		if $(interop_prefix)c/Windows/System32/reg.exe query "$wslu_distro_regpath" /v PackageFamilyName &>/dev/null; then
+			# if it is a store distro
+			wslu_distro_packagename=$($(interop_prefix)c/Windows/System32/reg.exe query "$wslu_distro_regpath" /v PackageFamilyName | tail -n 2 | head -n 1 | sed -e 's|\r||g')
+			wslu_distro_packagename=${wslu_distro_packagename##* }
+			wslu_base_exec_folder_path="$(wslpath "$(winps_exec "Write-Output \$Env:LOCALAPPDATA" | tr -d "\r")\\Microsoft\\WindowsApps\\$wslu_distro_packagename")"
+			wslpath -w "$(find "$wslu_base_exec_folder_path" -name "*.exe")" > ~/.config/wslu/baseexec
+		else
+			# fallback if it is imported repository or other type
+			echo "C:\\Windows\\System32\\wsl.exe" > ~/.config/wslu/baseexec
+		fi
+	else
+		# older version fallback.
+		echo "C:\\Windows\\System32\\wsl.exe" > ~/.config/wslu/baseexec
+	fi
+}
+
+# first run, saving some information
+if [ ! -d ~/.config/wslu ]; then
+	mkdir -p ~/.config/wslu
+fi
+
+# generate oem codepage
+if [ ! -f ~/.config/wslu/oemcp ]; then
+	"$(interop_prefix)"c/Windows/System32/reg.exe query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Nls\\CodePage" /v OEMCP 2>&1 | sed -n 3p | sed -e 's|\r||g' | grep -o '[[:digit:]]*' > ~/.config/wslu/oemcp
+fi
+
+# generate base exe locaiton
+if [ ! -f ~/.config/wslu/baseexec ] || [ -z "$(cat ~/.config/wslu/baseexec)" ]; then
+	# if it is not generated
+	baseexec_gen
+elif grep -q "/" ~/.config/wslu/baseexec; then
+	# if baseexec is using the old linux style, regenerate
+	baseexec_gen
+elif ! which "$(cat ~/.config/wslu/baseexec)" &>/dev/null; then
+	# if baseexec cannnot be executed, regenerate
+	rm ~/.config/wslu/baseexec
+	baseexec_gen
+fi
+
+# when --debug, debug.
+if [ "$1" == "--debug" ]; then
+	echo "${debug}Debug Mode Enabled."
+	shift
+	set -x
+fi
+
+# basic distro detection
+distro="$(head -n1 /etc/os-release | sed -e 's/NAME=\"//g')"
+case $distro in
+	*Pengwin*) distro="pengwin";;
+	*WLinux*) distro="wlinux";;
+	Ubuntu*) distro="ubuntu";;
+	*Debian*) distro="debian";;
+	*Kali*) distro="kali";;
+	openSUSE*) distro="opensuse";;
+	SLES*) distro="sles";;
+	Alpine*) distro="alpine";;
+	Arch*) distro="archlinux";;
+	*Oracle*) distro="oracle";;
+	Scientific*) distro="scilinux";;
+	*Fedora*) distro="fedora";;
+	*Generic*) [ "fedora" == "$(grep -e "LIKE=" /etc/os-release | sed -e 's/ID_LIKE=//g')" ] && distro="oldfedora" || distro="unknown";;
+	*) distro="unknown";;
+esac
+version=44
+
+is_line=0
+is_splash=0
+help_short="wslfetch (--help|--version|--splash|--line)"
+
+for args; do
+	case $args in
+		-h|--help) help "$0" "$help_short"; exit;;
+		-v|--version) echo "wslu v$wslu_version; wslfetch v$version"; exit;;
+		-s|--splash) is_splash=1;;
+		-l|--line) is_line=1;;
+	esac
+done
+
+hostname=$(</etc/hostname)
+branch=$(wslsys -b -s)
+build=$(wslsys -B -s)
+release=$(wslsys -R -s)
+kernel=$(wslsys -K -s)
+uptime=$(wslsys -U -s)
+
+case "$distro" in
+	'ubuntu')
+		t="${red}${bold}"
+		full_text=(
+			"${bold}${red}               .-/+oossssoo+/-.               ${reset}"
+			"${bold}${red}           \`:+ssssssssssssssssss+:\`           ${reset}"
+			"${bold}${red}         -+ssssssssssssssssssyyssss+-         ${reset}"
+			"${bold}${red}       .ossssssssssssssssss${white}dMMMNy${red}sssso.       ${reset}"
+			"${bold}${red}      /sssssssssss${white}hdmmNNmmyNMMMMh${red}ssssss/      ${reset}"
+			"${bold}${red}     +sssssssss${white}hm${red}yd${white}MMMMMMMNddddy${red}ssssssss+     ${reset}"
+			"${bold}${red}    /ssssssss${white}hNMMM${red}yh${white}hyyyyhmNMMMNh${red}ssssssss/    ${reset}"
+			"${bold}${red}   .ssssssss${white}dMMMNh${red}ssssssssss${white}hNMMMd${red}ssssssss.   ${reset}"
+			"${bold}${red}   +ssss${white}hhhyNMMNy${red}ssssssssssss${white}yNMMMy${red}sssssss+   ${reset}"
+			"${bold}${red}   oss${white}yNMMMNyMMh${red}ssssssssssssss${white}hmmmh${red}ssssssso   ${reset}"
+			"${bold}${red}   oss${white}yNMMMNyMMh${red}sssssssssssssshmmmh${red}ssssssso   ${reset}"
+			"${bold}${red}   +ssss${white}hhhyNMMNy${red}ssssssssssss${white}yNMMMy${red}sssssss+   ${reset}"
+			"${bold}${red}   .ssssssss${white}dMMMNh${red}ssssssssss${white}hNMMMd${red}ssssssss.   ${reset}"
+			"${bold}${red}    /ssssssss${white}hNMMM${red}yh${white}hyyyyhdNMMMNh${red}ssssssss/    ${reset}"
+			"${bold}${red}     +sssssssss${white}dm${red}yd${white}MMMMMMMMddddy${red}ssssssss+     ${reset}"
+			"${bold}${red}      /sssssssssss${white}hdmNNNNmyNMMMMh${red}ssssss/      ${reset}"
+			"${bold}${red}       .ossssssssssssssssss${white}dMMMNy${red}sssso.       ${reset}"
+			"${bold}${red}         -+sssssssssssssssss${white}yyy${red}ssss+-         ${reset}"
+			"${bold}${red}           \`:+ssssssssssssssssss+:\`           ${reset}"
+			"${bold}${red}               .-/+oossssoo+/-.               ${reset}");;
+	'debian')
+		t="${light_red}${bold}"
+		full_text=(
+			"${white}         _,met\$\$\$\$\$gg.               ${reset}"
+			"${white}      ,g\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$P.            ${reset}"
+			"${white}    ,g\$\$P\"\"       \"\"\"Y\$\$.\".          ${reset}"
+			"${white}   ,\$\$P'              \`\$\$\$.          ${reset}"
+			"${white}  ',\$\$P       ,ggs.     \`\$\$b:        ${reset}"
+			"${white}  \`d\$\$'     ,\$P\"\'   ${light_red}.${white}    \$\$\$        ${reset}"
+			"${white}   \$\$P      d\$\'     ${light_red},${white}    \$\$P        ${reset}"
+			"${white}   \$\$:      \$\$.   ${light_red}-${white}    ,d\$\$'         ${reset}"
+			"${white}   \$\$\;      Y\$b._   _,d\$P'          ${reset}"
+			"${white}   Y\$\$.    ${light_red}\`.${white}\`\"Y\$\$\$\$P\"'              ${reset}"
+			"${white}   \`\$\$b      ${light_red}\"-.__                   ${reset}"
+			"${white}    \`Y\$\$                             ${reset}"
+			"${white}     \`Y\$\$.                           ${reset}"
+			"${white}       \`\$\$b.                         ${reset}"
+			"${white}         \`Y\$\$b.                      ${reset}"
+			"${white}            \`\"Y\$b._                  ${reset}"
+			"${white}                \`\"\"\"\"                ${reset}");;
+	'kali')
+		t="${light_blue}${bold}"
+		full_text=(
+			"${light_blue}..............                                     "
+			"${light_blue}            ..,;:ccc,.                             ${reset}"
+			"${light_blue}          ......''';lxO.                           ${reset}"
+			"${light_blue}.....''''..........,:ld;                           ${reset}"
+			"${light_blue}           .';;;:::;,,.x,                          ${reset}"
+			"${light_blue}      ..'''.            0Xxoc:,.  ...              ${reset}"
+			"${light_blue}  ....                ,ONkc;,;cokOdc',.            ${reset}"
+			"${light_blue} .                   OMo           ':${black}dd${light_blue}o.          ${reset}"
+			"${light_blue}                    dMc               :OO;         ${reset}"
+			"${light_blue}                    0M.                 .:o.       ${reset}"
+			"${light_blue}                    ;Wd                            ${reset}"
+			"${light_blue}                     ;XO,                          ${reset}"
+			"${light_blue}                       ,d0Odlc;,..                 ${reset}"
+			"${light_blue}                           ..',;:cdOOd::,.         ${reset}"
+			"${light_blue}                                    .:d;.':;.      ${reset}"
+			"${light_blue}                                       'd,  .'     ${reset}"
+			"${light_blue}                                         ;l   ..   ${reset}"
+			"${light_blue}                                          .o       ${reset}"
+			"${light_blue}                                            c      ${reset}"
+			"${light_blue}                                            .'     ${reset}"
+			"${light_blue}                                             .     ${reset}");;
+	'opensuse')
+		t="${light_green}${bold}"
+		full_text=(
+			"${light_gray}             .;ldkO0000Okdl;.                   ${reset}"
+			"${light_gray}         .;d00xl:^''''''^:ok00d;.               ${reset}"
+			"${light_gray}       .d00l'                'o00d.             ${reset}"
+			"${light_gray}     .d0Kd'${light_green}  Okxol:;,.          ${light_gray}:O0d.           ${reset}"
+			"${light_gray}    .OK${light_green}KKK0kOKKKKKKKKKKOxo:,      ${light_gray}lKO.          ${reset}"
+			"${light_gray}   ,0K${light_green}KKKKKKKKKKKKKKK0P^${light_gray},,,${light_green}^dx:${light_gray}    ;00,         ${reset}"
+			"${light_gray}  .OK${light_green}KKKKKKKKKKKKKKKk'${light_gray}.oOPPb.${light_green}'0k.${light_gray}   cKO.        ${reset}"
+			"${light_gray}  :KK${light_green}KKKKKKKKKKKKKKK: ${light_gray}kKx..dd ${light_green}lKd${light_gray}   'OK:        ${reset}"
+			"${light_gray}  dKK${light_green}KKKKKKKKKOx0KKKd ${light_gray}^0KKKO' ${light_green}kKKc${light_gray}   dKd        ${reset}"
+			"${light_gray}  dKK${light_green}KKKKKKKKKK;.;oOKx,..${light_gray}^${light_green}..;kKKK0.${light_gray}  dKd        ${reset}"
+			"${light_gray}  :KK${light_green}KKKKKKKKKK0o;...^cdxxOK0O/^^'  ${light_gray}.0K:        ${reset}"
+			"${light_gray}   kKK${light_green}KKKKKKKKKKKKK0x;,,......,;od  ${light_gray}lKk         ${reset}"
+			"${light_gray}   '0K${light_green}KKKKKKKKKKKKKKKKKKKK00KKOo^  ${light_gray}c00'         ${reset}"
+			"${light_gray}    'kK${light_green}KKOxddxkOO00000Okxoc;''   ${light_gray}.dKk'          ${reset}"
+			"${light_gray}      l0Ko.                    .c00l'           ${reset}"
+			"${light_gray}       'l0Kk:.              .;xK0l'             ${reset}"
+			"${light_gray}          'lkK0xl:;,,,,;:ldO0kl'                ${reset}"
+			"${light_gray}              '^:ldxkkkkxdl:^'                  ${reset}");;
+ 	'pengwin')
+		t="${purple}${bold}"
+		full_text=(
+			"${light_purple}                       ...\`               ${reset}"
+			"${light_purple}                       \`-///:-\`           ${reset}"
+			"${light_purple}                         .+${purple}ssys${light_purple}/          ${reset}"
+			"${light_purple}                          +${purple}yyyyy${light_purple}o         ${reset}"
+			"${purple}                          -yyyyyy:        ${reset}"
+			"${purple}             \`.:/+ooo+/:\` -yyyyyy+        ${reset}"
+			"${purple}           \`:oyyyyyys+:-.\`syyyyyy:        ${reset}"
+			"${purple}          .syyyyyyo-\`   .oyyyyyyo         ${reset}"
+			"${purple}         \`syyyyyy/   \`-+yyyyyyy/\`         ${reset}"
+			"${purple}         /yyyyyy+ -/osyyyyyyo/.           ${reset}"
+			"${purple}         +yyyyyy-  \`.-:::-.\`              ${reset}"
+			"${purple}         .yyyyyy-                         ${reset}"
+			"${light_purple}          :${purple}yyyyy${light_purple}o                         ${reset}"
+			"${light_purple}           .+${purple}ooo${light_purple}+:                        ${reset}"
+			"${light_purple}             \`.::/:.                      ${reset}");;
+	'wlinux')
+		t="${light_orange}${bold}"
+		full_text=(
+			"${light_orange}                 _.._                 ${reset}"
+			"${light_orange}              .-'    \`-.              ${reset}"
+			"${light_orange}             :          ;             ${reset}"
+			"${light_orange}             ; ,_    _, ;             ${reset}"
+			"${light_orange}             : \\{\"  \"}/ :             ${reset}"
+			"${light_orange}            ,'.'\"=..=''.'.            ${reset}"
+			"${light_orange}           ; / \      / \ ;           ${reset}"
+			"${light_orange}         .' ;   '.__.'   ; '.         ${reset}"
+			"${light_orange}      .-' .'              '. '-.      ${reset}"
+			"${light_orange}    .'   ;                  ;   '.    ${reset}"
+			"${light_orange}   /    /                    \    \   ${reset}"
+			"${light_orange}  ;    ;                      ;    ;  ${reset}"
+			"${light_orange}  ;   \`-._                  _.-'   ;  ${reset}"
+			"${light_orange}   ;      ""--.        .--""      ;   ${reset}"
+			"${light_orange}    '.    _    ;      ;    _    .'    ${reset}"
+			"${light_orange}    {""..' '._.-.    .-._.' '..""}    ${reset}"
+			"${light_orange}     \           ;  ;           /     ${reset}"
+			"${light_orange}      :         :    :         :      ${reset}"
+			"${light_orange}      :         :.__.:         :      ${reset}"
+			"${light_orange}       \       /\"-..-\"\       /       ${reset}"
+			"${light_orange}        '-.__.'        '.__.-'        ${reset}");;
+	'sles')
+		t="${green}${bold}"
+		full_text=(
+			"${green}             .;ldkO0000Okdl;.               ${reset}"
+			"${green}         .;d00xl:^''''''^:ok00d;.           ${reset}"
+			"${green}       .d00l'                'o00d.         ${reset}"
+			"${green}     .d0Kd'  Okxol:;,.          :O0d.       ${reset}"
+			"${green}    .OKKKK0kOKKKKKKKKKKOxo:,      lKO.      ${reset}"
+			"${green}   ,0KKKKKKKKKKKKKKKK0P^,,,^dx:    ;00,     ${reset}"
+			"${green}  .OKKKKKKKKKKKKKKKKk'.oOPPb.'0k.   cKO.    ${reset}"
+			"${green}  :KKKKKKKKKKKKKKKKK: kKx..dd lKd   'OK:    ${reset}"
+			"${green}  dKKKKKKKKKKKOx0KKKd ^0KKKO' kKKc   dKd    ${reset}"
+			"${green}  dKKKKKKKKKKKK;.;oOKx,..^..;kKKK0.  dKd    ${reset}"
+			"${green}  :KKKKKKKKKKKK0o;...^cdxxOK0O/^^'  .0K:    ${reset}"
+			"${green}   kKKKKKKKKKKKKKKK0x;,,......,;od  lKk     ${reset}"
+			"${green}   '0KKKKKKKKKKKKKKKKKKKKK00KKOo^  c00'     ${reset}"
+			"${green}    'kKKKOxddxkOO00000Okxoc;''   .dKk'      ${reset}"
+			"${green}      l0Ko.                    .c00l'       ${reset}"
+			"${green}       'l0Kk:.              .;xK0l'         ${reset}"
+			"${green}          'lkK0xl:;,,,,;:ldO0kl'            ${reset}"
+			"${green}              '^:ldxkkkkxdl:^'              ${reset}");;
+	'alpine')
+		t="${blue}${bold}"
+		full_text=(
+			"${light_blue}        ................          ${reset}"
+			"${light_blue}       ∴::::::::::::::::∴         ${reset}"
+			"${light_blue}      ∴::::::::::::::::::∴        ${reset}"
+			"${light_blue}     ∴::::::::::::::::::::∴       ${reset}"
+			"${light_blue}    ∴:::::::. :::::':::::::∴      ${reset}"
+			"${light_blue}   ∴:::::::.   ;::; ::::::::∴     ${reset}"
+			"${light_blue}  ∴::::::;      ∵     :::::::∴    ${reset}"
+			"${light_blue} ∴:::::.     .         .::::::∴   ${reset}"
+			"${light_blue} ::::::     :::.    .    ::::::   ${reset}"
+			"${light_blue} ∵::::     ::::::.  ::.   ::::∵   ${reset}"
+			"${light_blue}  ∵:..   .:;::::::: :::.  :::∵    ${reset}"
+			"${light_blue}   ∵::::::::::::::::::::::::∵     ${reset}"
+			"${light_blue}    ∵::::::::::::::::::::::∵      ${reset}"
+			"${light_blue}     ∵::::::::::::::::::::∵       ${reset}"
+			"${light_blue}      ::::::::::::::::::::        ${reset}"
+			"${light_blue}       ∵::::::::::::::::∵         ${reset}");;
+	'archlinux')
+		t="${light_cyan}${bold}"
+		full_text=(
+			"${light_cyan}                   -\`                 ${reset}"
+			"${light_cyan}                  .o+\`                ${reset}"
+			"${light_cyan}                 \`ooo/                ${reset}"
+			"${light_cyan}                \`+oooo:               ${reset}"
+			"${light_cyan}               \`+oooooo:              ${reset}"
+			"${light_cyan}               -+oooooo+:             ${reset}"
+			"${light_cyan}             \`/:-:++oooo+:            ${reset}"
+			"${light_cyan}            \`/++++/+++++++:           ${reset}"
+			"${light_cyan}           \`/++++++++++++++:          ${reset}"
+			"${light_cyan}          \`/+++o${cyan}oooooooo${light_cyan}oooo/\`        ${reset}"
+			"${cyan}         ${light_cyan}./${cyan}ooosssso++osssssso${light_cyan}+\`       ${reset}"
+			"${cyan}        .oossssso-\`\`\`\`/ossssss+\`      ${reset}"
+			"${cyan}       -osssssso.      :ssssssso.     ${reset}"
+			"${cyan}      :osssssss/        osssso+++.    ${reset}"
+			"${cyan}     /ossssssss/        +ssssooo/-    ${reset}"
+			"${cyan}   \`/ossssso+/:-        -:/+osssso+-  ${reset}"
+			"${cyan}  \`+sso+:-\`                 \`.-/+oso: ${reset}"
+			"${cyan} \`++:.                           \`-/+/${reset}"
+			"${cyan} .\`                                 \`/${reset}");;
+	'scilinux')
+		t="${light_blue}${bold}"
+		full_text=(
+			"${light_blue}                  =/;;/-                    ${reset}"
+			"${light_blue}                 +:    //                   ${reset}"
+			"${light_blue}                /;      /;                  ${reset}"
+			"${light_blue}               -X        H.                 ${reset}"
+			"${light_blue} .//;;;:;;-,   X=        :+   .-;:=;:;#;.   ${reset}"
+			"${light_blue} M-       ,=;;;#:,      ,:#;;:=,       ,@   ${reset}"
+			"${light_blue} :#           :#.=/++++/=.$=           #=   ${reset}"
+			"${light_blue}  ,#;         #/:+/;,,/++:+/         ;+.    ${reset}"
+			"${light_blue}    ,+/.    ,;@+,        ,#H;,    ,/+,      ${reset}"
+			"${light_blue}       ;+;;/= @.  ${light_red}.H${white}#${light_red}#X   ${light_blue}-X :///+;         ${reset}"
+			"${light_blue}       ;+=;;;.@,  ${white}.X${light_red}M${white}@$.  ${light_blue}=X.//;=#/.        ${reset}"
+			"${light_blue}    ,;:      :@#=        =\$H:     .+#-      ${reset}"
+			"${light_blue}  ,#=         #;-///==///-//         =#,    ${reset}"
+			"${light_blue} ;+           :#-;;;:;;;;-X-           +:   ${reset}"
+			"${light_blue} @-      .-;;;;M-        =M/;;;-.      -X   ${reset}"
+			"${light_blue}  :;;::;;-.    #-        :+    ,-;;-;:==    ${reset}"
+			"${light_blue}               ,X        H.                 ${reset}"
+			"${light_blue}                ;/      #=                  ${reset}"
+			"${light_blue}                 //    +;                   ${reset}"
+			"${light_blue}                  '////'                    ${reset}");;
+	'oracle')
+		t="${red}${bold}"
+		full_text=(
+			"${red}      \`-/+++++++++++++++++/-.\`       ${reset}"
+			"${red}    \`/syyyyyyyyyyyyyyyyyyyyyyys/.    ${reset}"
+			"${red}   :yyyyo/-...............-/oyyyy/   ${reset}"
+			"${red}  /yyys-                     .oyyy+  ${reset}"
+			"${red} .yyyy\`                       \`syyy- ${reset}"
+			"${red} :yyyo                         /yyy/ ${reset}"
+			"${red} .yyyy\`                       \`syyy- ${reset}"
+			"${red}  /yyys.                     .oyyyo  ${reset}"
+			"${red}   /yyyyo:-...............-:oyyyy/\`  ${reset}"
+			"${red}    \`/syyyyyyyyyyyyyyyyyyyyyyys+.    ${reset}"
+			"${red}      \`.:/+ooooooooooooooo+/:.\`      ${reset}");;
+	'oldfedora'|'fedora')
+		t="${light_blue}${bold}"
+		full_text=(
+			"${light_blue}           /:-------------:\         ${reset}"
+			"${light_blue}        :-------------------::       ${reset}"
+			"${light_blue}      :-----------${white}/shhOHbmp${light_blue}---:\\     ${reset}"
+			"${light_blue}    /-----------${white}omMMMNNNMMD  ${light_blue}---:    ${reset}"
+			"${light_blue}   :-----------${white}sMMMMNMNMP${light_blue}.    ---:   ${reset}"
+			"${light_blue}  :-----------${white}:MMMdP${light_blue}-------    ---\  ${reset}"
+			"${light_blue} ,------------${white}:MMMd${light_blue}--------    ---:  ${reset}"
+			"${light_blue} :------------${white}:MMMd${light_blue}-------    .---:  ${reset}"
+			"${light_blue} :----    ${white}oNMMMMMMMMMNho${light_blue}     .----:  ${reset}"
+			"${light_blue} :--     .${white}+shhhMMMmhhy++${light_blue}   .------/  ${reset}"
+			"${light_blue} :-    -------${white}:MMMd${light_blue}--------------:   ${reset}"
+			"${light_blue} :-   --------${white}/MMMd${light_blue}-------------;    ${reset}"
+			"${light_blue} :-    ------${white}/hMMMy${light_blue}------------:     ${reset}"
+			"${light_blue} :--${white} :dMNdhhdNMMNo${light_blue}------------;      ${reset}"
+			"${light_blue} :---${white}:sdNMMMMNds:${light_blue}------------:       ${reset}"
+			"${light_blue} :------${white}:://:${light_blue}-------------::         ${reset}"
+			"${light_blue} :---------------------://           ${reset}");;
+	*)
+		t="${cyan}${bold}"
+		full_text=(
+			"${cyan} /\$\$      /\$\$  /\$\$\$\$\$\$  /\$\$       "
+			"${cyan}| \$\$  /\$ | \$\$ /\$\$__  \$\$| \$\$	  "
+			"${cyan}| \$\$ /\$\$\$| \$\$| \$\$${reset}  ${cyan}\\__/| \$\$${reset}       "
+			"${cyan}| \$\$${reset}${cyan}/\$\$${reset} ${cyan}\$\$${reset} ${cyan}\$\$${reset}${cyan}|  \$\$\$\$\$\$${reset} ${cyan}| \$\$${reset}       "
+			"${cyan}| \$\$\$\$${reset}${cyan}_  \$\$\$\$${reset} ${cyan}\\____  \$\$${reset}${cyan}| \$\$${reset}	  "
+			"${cyan}| \$\$\$${reset}${cyan}/ \\  \$\$\$${reset} ${cyan}/\$\$${reset}  ${cyan}\\ \$\$${reset}${cyan}| \$\$${reset}	  "
+			"${cyan}| \$\$${reset}${cyan}/   \\  \$\$${reset}${cyan}|  \$\$\$\$\$\$${reset}${cyan}/| \$\$\$\$\$\$\$\$${reset} "
+			"${cyan}|__/     \\__/ \\______/ |________/${reset} ");;
+esac
+
+
+info_text=("${t}Windows 10 Linux Subsystem${reset}"
+"${t}${USER}${reset}@${t}${hostname}${reset}"
+"${t}BUILD:${reset}	${build}"
+"${t}BRANCH:${reset}	${branch}"
+"${t}RELEASE:${reset}	${release}"
+"${t}KERNEL:${reset}	${kernel}"
+"${t}UPTIME:${reset}	${uptime}"
+""
+"   \e[40m   \e[41m   \e[42m   \e[43m   \e[44m   \e[45m   \e[46m   \e[47m   ${reset}")
+
+function line {
+	if [[ "$1" == "1" ]]; then
+		CUR_TTY="$(tty)"
+		yes -- "${2:-=}" | tr -d $'\n' | head -c "$(stty -a <"$CUR_TTY" | head -1 | sed -e "s|^.*columns ||g" -e "s|;.*$||g")"
+	else
+		echo ""
+	fi
+}
+
+info_length=${#info_text[@]}
+full_length=${#full_text[@]}
+
+line "$is_line" "-"
+# use for loop to read all values and indexes
+for (( i=0; i<full_length; i++ ));
+do
+	tmp=""
+	if [[ $i -le ${info_length} ]]; then
+		tmp="${info_text[$i]}"
+	fi
+	echo -e "${full_text[$i]}${tmp}"
+done
+line "$is_line" "-"
+
+if [[ "$is_splash" == "1" ]]; then
+	sleep 2
+	clear
+fi

@@ -1,0 +1,240 @@
+#!/bin/bash
+# wslu - Windows 10 linux Subsystem Utility
+# Component of Windows 10 linux Subsystem Utility
+# <https://github.com/wslutilities/wslu>
+# Copyright (C) 2019 Patrick Wu
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Version
+wslu_version=2.3.6
+
+# Speed up script by not using unicode.
+LC_ALL=C
+LANG=C
+
+# force bash to not showing code manually.
+set +x
+
+# checking interopability
+grep enabled /proc/sys/fs/binfmt_misc/WSLInterop >/dev/null || (echo "WSL Interopability is disabled. Please enable it before using WSL."; exit 1)
+
+# variables
+## color
+black=$(echo -e '\e[30m')
+red=$(echo -e '\e[31m')
+green=$(echo -e '\e[32m')
+brown=$(echo -e '\e[33m')
+blue=$(echo -e '\e[34m')
+purple=$(echo -e '\e[35m')
+cyan=$(echo -e '\e[36m')
+yellow=$(echo -e '\e[1;33m')
+white=$(echo -e '\e[1;37m')
+dark_gray=$(echo -e '\e[1;30m')
+light_red=$(echo -e '\e[1;31m')
+light_green=$(echo -e '\e[1;32m')
+light_blue=$(echo -e '\e[1;34m')
+light_purple=$(echo -e '\e[1;35m')
+light_cyan=$(echo -e '\e[1;36m')
+light_gray=$(echo -e '\e[37m')
+orange=$(echo -e '\e[38;5;202m')
+light_orange=$(echo -e '\e[38;5;214m')
+bold=$(echo -e '\033[1m')
+reset=$(echo -e '\033(B\033[m')
+
+## indicator
+info="${green}[info]${reset}"
+input_info="${cyan}[input]${reset}"
+error="${red}[error]${reset}"
+warn="${orange}[warn]${reset}"
+debug="${orange}${bold}[debug]${reset}"
+
+## Windows build number constant
+readonly BN_SPR_CREATORS=15063		#1703, Redstone 2, Creators Update
+readonly BN_FAL_CREATORS=16299		#1709, Redstone 3, Fall Creators Update
+readonly BN_APR_EIGHTEEN=17134		#1803, Redstone 4, April 2018 Update
+readonly BN_OCT_EIGHTEEN=17763		#1809, Redstone 5, October 2018 Update
+readonly BN_MAY_NINETEEN=18362		#1903, 19H1, May 2019 Update
+
+# functions
+
+function help {
+	app_name=$(basename "$1")
+	echo -e "$app_name - Part of wslu, a collection of utilities for Windows 10 Windows Subsystem for Linux
+Usage: $2
+
+For more help for $app_name, visit the following site: https://github.com/wslutilities/wslu/wiki/$app_name"
+}
+
+function double_dash_p {
+	echo "${@//\\/\\\\}"
+}
+
+function interop_prefix {
+	if [ -f /etc/wsl.conf ]; then
+		tmp=$(awk -F '=' '/root/ {print $2}' /etc/wsl.conf | awk '{$1=$1;print}')
+		if [ "$tmp" == "" ]; then
+			echo "/mnt/"
+		else
+			echo "$tmp"
+		fi
+	else
+		echo "/mnt/"
+	fi
+}
+
+function chcp_com {
+	"$(interop_prefix)"c/Windows/System32/chcp.com "$@" >/dev/null
+}
+
+function winps_exec {
+	chcp_com $(cat ~/.config/wslu/oemcp)
+	"$(interop_prefix)"c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -NonInteractive -Command "$@"
+	chcp_com 65001
+}
+
+function baseexec_gen {
+	wslutmpbuild=$("$(interop_prefix)"c/Windows/System32/reg.exe query "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion" /v CurrentBuild | tail -n 2 | head -n 1 | sed -e 's|\r||g')
+	wslutmpbuild=${wslutmpbuild##* }
+	wslutmpbuild="$(( $wslutmpbuild + 0 ))"
+	if [ $wslutmpbuild -ge $BN_MAY_NINETEEN ]; then
+		# The environment variable only available in 19H1 or later.
+		wslu_distro_regpath=$("$(interop_prefix)"c/Windows/System32/reg.exe query "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lxss" /s /f DistributionName 2>&1 | sed -e 's|\r||g' | grep -B1 -e "$WSL_DISTRO_NAME$" | head -n1 )
+		if $(interop_prefix)c/Windows/System32/reg.exe query "$wslu_distro_regpath" /v PackageFamilyName &>/dev/null; then
+			# if it is a store distro
+			wslu_distro_packagename=$($(interop_prefix)c/Windows/System32/reg.exe query "$wslu_distro_regpath" /v PackageFamilyName | tail -n 2 | head -n 1 | sed -e 's|\r||g')
+			wslu_distro_packagename=${wslu_distro_packagename##* }
+			wslu_base_exec_folder_path="$(wslpath "$(winps_exec "Write-Output \$Env:LOCALAPPDATA" | tr -d "\r")\\Microsoft\\WindowsApps\\$wslu_distro_packagename")"
+			wslpath -w "$(find "$wslu_base_exec_folder_path" -name "*.exe")" > ~/.config/wslu/baseexec
+		else
+			# fallback if it is imported repository or other type
+			echo "C:\\Windows\\System32\\wsl.exe" > ~/.config/wslu/baseexec
+		fi
+	else
+		# older version fallback.
+		echo "C:\\Windows\\System32\\wsl.exe" > ~/.config/wslu/baseexec
+	fi
+}
+
+# first run, saving some information
+if [ ! -d ~/.config/wslu ]; then
+	mkdir -p ~/.config/wslu
+fi
+
+# generate oem codepage
+if [ ! -f ~/.config/wslu/oemcp ]; then
+	"$(interop_prefix)"c/Windows/System32/reg.exe query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Nls\\CodePage" /v OEMCP 2>&1 | sed -n 3p | sed -e 's|\r||g' | grep -o '[[:digit:]]*' > ~/.config/wslu/oemcp
+fi
+
+# generate base exe locaiton
+if [ ! -f ~/.config/wslu/baseexec ] || [ -z "$(cat ~/.config/wslu/baseexec)" ]; then
+	# if it is not generated
+	baseexec_gen
+elif grep -q "/" ~/.config/wslu/baseexec; then
+	# if baseexec is using the old linux style, regenerate
+	baseexec_gen
+elif ! which "$(cat ~/.config/wslu/baseexec)" &>/dev/null; then
+	# if baseexec cannnot be executed, regenerate
+	rm ~/.config/wslu/baseexec
+	baseexec_gen
+fi
+
+# when --debug, debug.
+if [ "$1" == "--debug" ]; then
+	echo "${debug}Debug Mode Enabled."
+	shift
+	set -x
+fi
+
+# basic distro detection
+distro="$(head -n1 /etc/os-release | sed -e 's/NAME=\"//g')"
+case $distro in
+	*Pengwin*) distro="pengwin";;
+	*WLinux*) distro="wlinux";;
+	Ubuntu*) distro="ubuntu";;
+	*Debian*) distro="debian";;
+	*Kali*) distro="kali";;
+	openSUSE*) distro="opensuse";;
+	SLES*) distro="sles";;
+	Alpine*) distro="alpine";;
+	Arch*) distro="archlinux";;
+	*Oracle*) distro="oracle";;
+	Scientific*) distro="scilinux";;
+	*Fedora*) distro="fedora";;
+	*Generic*) [ "fedora" == "$(grep -e "LIKE=" /etc/os-release | sed -e 's/ID_LIKE=//g')" ] && distro="oldfedora" || distro="unknown";;
+	*) distro="unknown";;
+esac
+version="29"
+
+help_short="wslsys (-h|-v|-I|-b|-B|-fB|-U|-R|-K|-P) -s"
+
+## Windows 10 information
+branch=$("$(interop_prefix)"c/Windows/System32/reg.exe query "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion" /v BuildBranch | tail -n 2 | head -n 1 | sed -e 's|\r||g')
+branch=${branch##* }
+build=$("$(interop_prefix)"c/Windows/System32/reg.exe query "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion" /v CurrentBuild | tail -n 2 | head -n 1 | sed -e 's|\r||g')
+build=${build##* }
+full_build=$("$(interop_prefix)"c/Windows/System32/reg.exe query "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion" /v BuildLabEx | tail -n 2 | head -n 1 | sed -e 's|\r||g')
+full_build=${full_build##* }
+installdate=$("$(interop_prefix)"c/Windows/System32/reg.exe query "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion" /v InstallDate | tail -n 2 | head -n 1 | sed -e 's|\r||g')
+installdate=${installdate##* }
+
+## WSL information
+release="$(grep "PRETTY_NAME=" /etc/os-release | sed -e 's/PRETTY_NAME=//g' -e 's/"//g')"
+kernel="$(</proc/sys/kernel/ostype) $(</proc/sys/kernel/osrelease)"
+uptime=$(</proc/uptime)
+uptime=${uptime//.*}
+days=$((uptime/86400))
+hours=$((uptime/3600%24))
+minutes=$((uptime/60%60))
+uptime="${days}d ${hours}h ${minutes}m"
+
+### WSL package information
+case "$distro" in
+	'ubuntu'|'kali'|'debian'|'wlinux')
+		packages=$(dpkg -l | grep -c '^i');;
+	'opensuse'|'sles'|'scilinux'|'oldfedora'|'fedora'|'oracle')
+		packages=$(rpm -qa | wc -l);;
+	'alpine')
+		packages=$(apk info | wc -l);;
+	'archlinux')
+		packages=$(pacman -Qq | wc -l);;
+esac
+
+##  old version of fedora remix specific information
+if [ "$distro" == "oldfedora" ]; then
+	release="Fedora Remix $(grep -e "^VERSION=" /etc/os-release | sed -e 's/\"//g' | sed -e 's/VERSION=//g')"
+fi
+
+## Simple printer defined for fetching information
+function printer {
+	if [[ $3 != "-s" ]]; then
+		echo "$1: $2"
+	else
+		echo "$2"
+	fi
+}
+
+case $1 in
+		-h|--help) help "$0" "$help_short"; exit;;
+		-v|--version) echo "wslu v$wslu_version; wslsys v$version"; exit;;
+		-I|--sys-installdate) printer "Release Install Date: $installdate" "$2";exit;;
+		-b|--branch) printer "Branch" "$branch" "$2";exit;;
+		-B|--build) printer "Build" "$build" "$2";exit;;
+		-fB|--full-build) printer "Full Build" "$full_build" "$2";exit;;
+		-U|--uptime) printer "Uptime" "$uptime" "$2";exit;;
+		-R|--release) printer "Linux Release" "$release" "$2";exit;;
+		-K|--kernel) printer "Linux Kernel" "$kernel" "$2";exit;;
+		-P|--package) printer "Packages Count" "$packages" "$2";exit;;
+		*) echo -e "Release Install Date: $installdate\nBranch: $branch\nBuild: $build\nFull Build: $full_build\nUptime: $uptime\nLinux Release: $release\nLinux Kernel: $kernel\nPackages Count: $packages";exit;;
+esac
