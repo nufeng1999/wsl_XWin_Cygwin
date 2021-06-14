@@ -1,6 +1,6 @@
 
 
-cd I:\cygwin64\home\Administrator
+cd C:\cygwin64
 
 set FontPath=/usr/share/fonts/wqy-bitmap
 set FontPath=%FontPath%,/usr/share/fonts/wqy-microhei
@@ -45,17 +45,6 @@ set FontPath=%FontPath%,/usr/share/fonts/75dpi
 set FontPath=%FontPath%,tcp/192.168.0.8:7100
 
 
-
-rem start I:\cygwin64\bin\run.exe --quote /usr/bin/bash.exe -l -c "cd /cygdrive/h/ISwitch/;bg ./ISwitch.exe ;cd;export LIBGL_ALWAYS_INDIRECT=1;XWin.exe -ac  -fullscreen  -silent-dup-error -listen tcp   -nolisten inet6 -hostintitle -clipboard  +iglx -wgl  -noreset -fp %FontPath%  :0"  -screen 0 2880x1556+0-64@1 
-start I:\cygwin64\bin\run.exe --quote /usr/bin/bash.exe -l -c "killall ISwitch.exe;cd /cygdrive/h/ISwitch/;./ISwitch.exe & cd;export LIBGL_ALWAYS_SOFTWARE=1;XWin.exe -ac -terminate -lesspointer -multiwindow -compositealpha -engine 4 -silent-dup-error -listen tcp -nolisten inet6 -hostintitle -clipboard +iglx -nowgl -noreset -fp %FontPath%  :0;killall ISwitch.exe"
+-fp %FontPath%
+start C:\cygwin64\bin\run.exe --quote /usr/bin/bash.exe -l -c "killall ISwitch.exe;cd /cygdrive/c/ISwitch/;./ISwitch.exe & cd;export LIBGL_ALWAYS_SOFTWARE=1;XWin.exe -ac -terminate -lesspointer -multiwindow -compositealpha -engine 4 -silent-dup-error -listen tcp -nolisten inet6 -hostintitle -clipboard +iglx -nowgl -noreset   :0;killall ISwitch.exe"
 exit
-
-
-rem -fp %FontPath%
-rem dbus-launch --auto-syntax;
-rem start I:\cygwin64\bin\run.exe --quote /usr/bin/bash.exe -l -c "cd;XWin.exe -ac -terminate -lesspointer -multiwindow -silent-dup-error -listen tcp -nolisten inet6 -hostintitle -clipboard  -noreset -fp %FontPath%  :0"
-
-rem -terminate -lesspointer -multiwindow -silent-dup-error -listen tcp -nolisten inet6 -hostintitle -clipboard -wgl -noreset -fp %FontPath%  " -
-rem H:\DOCUME~1\MobaXterm\slash\bin\bash.exe -l -i -c
-rem  :0 -ac -terminate -lesspointer -multiwindow -clipboard -wgl          -w hide  echo $DBUS_SESSION_BUS_ADDRESS
-
