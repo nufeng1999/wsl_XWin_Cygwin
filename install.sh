@@ -1,4 +1,12 @@
 #!/bin/bash
+#install cygwin XServer
+wintemp=`/mnt/c/WINDOWS/System32/cmd.exe /c "echo %TEMP%" 2>/dev/null|head -n 1 |tail -n 1`
+winwsltemp=`wslpath -u $wintemp`
+winwsltemp=${winwsltemp//$'\r'}
+winwsltemp=${winwsltemp//$'\n'}
+cygwininstallfile=`echo $winwsltemp/cygwin-install.bat`
+cp $PWD/cygwin-auto-install/cygwin-install.bat $cygwininstallfile
+/mnt/c/WINDOWS/System32/cmd.exe /c "$wintemp\\cygwin-install.bat"
 #create a link
 ln -sf $PWD/setguienv /usr/bin/setguienv
 ln -sf $PWD/setproxy.sh /usr/bin/setproxy
