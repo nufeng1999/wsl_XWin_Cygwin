@@ -20,6 +20,17 @@ ln -sf $PWD/wslstartxfce4.sh /usr/bin/wslstartxfce4
 ln -sf $PWD/wslterminator.sh /usr/bin/wslterminator
 ln -sf $PWD/setwsl2bridge.sh  /usr/bin/setwsl2bridge
 
+chmod +x /usr/bin/setguienv
+chmod +x /usr/bin/setproxy
+chmod +x /usr/bin/unsetproxy
+chmod +x /usr/bin/startwslX
+chmod +x /usr/bin/startXServer
+chmod +x /usr/bin/wslfcitx
+chmod +x /usr/bin/wslibus
+chmod +x /usr/bin/wslstartxfce4
+chmod +x /usr/bin/wslterminator
+chmod +x /usr/bin/setwsl2bridge
+
 mkdir -p /mnt/c/ISwitch
 cp -f $PWD/ISwitch* /mnt/c/ISwitch/
 cp -f $PWD/XWin_Cygwin.cmd /mnt/c/XWin_Cygwin.cmd
