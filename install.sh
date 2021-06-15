@@ -31,9 +31,10 @@ chmod +x /usr/bin/wslstartxfce4
 chmod +x /usr/bin/wslterminator
 chmod +x /usr/bin/setwsl2bridge
 
+/mnt/c/WINDOWS/System32/cmd.exe /c "taskkill /F /IM ISwitch.exe" > /dev/null 2>&1
 mkdir -p /mnt/c/ISwitch
-cp -f $PWD/ISwitch* /mnt/c/ISwitch/
-cp -f $PWD/XWin_Cygwin.cmd /mnt/c/XWin_Cygwin.cmd
+cp -f $PWD/ISwitch* /mnt/c/ISwitch/ > /dev/null 2>&1
+cp -f $PWD/XWin_Cygwin.cmd /mnt/c/XWin_Cygwin.cmd > /dev/null 2>&1
 
 INCLUDENumber=`grep -i "setguienv" ~/.bashrc|wc -l`
 if [ $ProcNumber -le 0 ];then
