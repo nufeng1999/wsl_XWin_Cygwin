@@ -25,7 +25,9 @@ mkdir /opt/WSL
 cd /opt/WSL
 
 git clone https://github.com/nufeng74/wsl_XWin_Cygwin.git
+
 or
+
 git clone git://github.com/nufeng74/wsl_XWin_Cygwin.git
 
 cd wsl_XWin_Cygwin
