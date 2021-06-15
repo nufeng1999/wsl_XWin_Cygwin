@@ -32,7 +32,7 @@ git clone git://github.com/nufeng74/wsl_XWin_Cygwin.git
 
 cd wsl_XWin_Cygwin
 
-./install 
+chmod +x ./install.sh;./install.sh
 # Close WSL
 DOS/PowerShell
 
