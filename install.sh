@@ -37,7 +37,7 @@ cp -f $PWD/ISwitch* /mnt/c/ISwitch/ > /dev/null 2>&1
 cp -f $PWD/XWin_Cygwin.cmd /mnt/c/XWin_Cygwin.cmd > /dev/null 2>&1
 
 INCLUDENumber=`grep -i "setguienv" ~/.bashrc|wc -l`
-if [ $ProcNumber -le 0 ];then
+if [ $INCLUDENumber -le 0 ];then
 
 	echo '. /usr/bin/setguienv' >> ~/.bashrc
 
