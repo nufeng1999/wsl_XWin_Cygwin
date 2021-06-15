@@ -1,3 +1,7 @@
 [submodule "cygwin-auto-install"]
 	path = cygwin-auto-install
-	url = git://github.com/nufeng74/cygwin-auto-install.git
+	url = https://github.com/nufeng74/cygwin-auto-install.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+        tagopt = --no-tags
+        pushurl=https://github.com/nufeng74/cygwin-auto-install.git
+        active = true
