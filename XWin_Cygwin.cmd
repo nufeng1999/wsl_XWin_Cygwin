@@ -46,5 +46,5 @@ set FontPath=%FontPath%,tcp/192.168.0.8:7100
 
 
 -fp %FontPath%
-start C:\cygwin64\bin\run.exe --quote /usr/bin/bash.exe -l -c "killall ISwitch.exe;cd /cygdrive/c/ISwitch/;./ISwitch.exe & cd;export LIBGL_ALWAYS_SOFTWARE=1;XWin.exe -ac -terminate -lesspointer -multiwindow -compositealpha -engine 4 -silent-dup-error -listen tcp -nolisten inet6 -hostintitle -clipboard +iglx -nowgl -noreset   :0;killall ISwitch.exe"
+start C:\cygwin64\bin\run.exe --quote /usr/bin/bash.exe -l -c "killall ISwitch.exe;cd /cygdrive/c/ISwitch/;./ISwitch.exe -c & cd;export LIBGL_ALWAYS_SOFTWARE=1;XWin.exe -ac -terminate -lesspointer -multiwindow -compositealpha -engine 4 -silent-dup-error -listen tcp -nolisten inet6 -hostintitle -clipboard +iglx -nowgl -noreset   :0;killall ISwitch.exe"
 exit
