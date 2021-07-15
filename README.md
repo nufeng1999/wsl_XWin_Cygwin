@@ -25,11 +25,11 @@ mkdir /opt/WSL
 
 cd /opt/WSL
 
-git clone https://github.com/nufeng74/wsl_XWin_Cygwin.git
+git clone https://github.com/nufeng74/wsl_XWin_Cygwin.git --recurse-submodules
 
 or
 
-git clone git://github.com/nufeng74/wsl_XWin_Cygwin.git
+git clone git://github.com/nufeng74/wsl_XWin_Cygwin.git --recurse-submodules
 
 cd wsl_XWin_Cygwin
 
