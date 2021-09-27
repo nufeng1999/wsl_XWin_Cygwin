@@ -26,6 +26,7 @@ ln -sf $PWD/setwsl2bridge.sh  /usr/bin/setwsl2bridge
 chmod +x /usr/bin/setguienv
 chmod +x /usr/bin/setproxy
 chmod +x /usr/bin/unsetproxy
+chmod +x /opt/WSL/wsl_XWin_Cygwin/wslpanel
 chmod +x /usr/bin/startwslX
 chmod +x /usr/bin/startXServer
 chmod +x /usr/bin/wslfcitx
