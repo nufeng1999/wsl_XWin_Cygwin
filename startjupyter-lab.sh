@@ -1,5 +1,5 @@
 #!/bin/bash
-cd
+cd ~/Jupyter
 PROC_NAME=jupyter-lab
 ProcNumber=`ps -ef |grep -w $PROC_NAME|grep -v grep|wc -l`
 #echo $ProcNumber
