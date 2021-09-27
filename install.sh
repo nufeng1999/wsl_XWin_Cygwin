@@ -6,6 +6,9 @@ winwsltemp=${winwsltemp//$'\r'}
 winwsltemp=${winwsltemp//$'\n'}
 cygwininstallfile=`echo $winwsltemp/cygwin-install.bat`
 cp $PWD/cygwin-auto-install/cygwin-install.bat $cygwininstallfile
+cp $PWD/ucrtbased.dll /mnt/c/WINDOWS/System32/
+cp $PWD/vcruntime140.dll /mnt/c/WINDOWS/System32/
+cp $PWD/vcruntime140d.dll /mnt/c/WINDOWS/System32/
 /mnt/c/WINDOWS/System32/cmd.exe /c "$wintemp\\cygwin-install.bat"
 #create a link
 ln -sf $PWD/setguienv /usr/bin/setguienv
