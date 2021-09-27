@@ -14,6 +14,7 @@ ISwitch.exe -s  --- Move task to background( default -c -w)
 [![Watch the video](https://github.com/nufeng74/wsl_XWin_Cygwin/blob/main/20210612_071703.gif?raw=true)](https://youtu.be/iy8j-fD82aQ)
 
 # Install
+Executing Windows terminal with administrator
 
 apt install gedit fcitx fcitx-config-gtk  fcitx-sunpinyin fcitx-pinyin  fcitx-googlepinyin xfonts-intl-chinese
 
