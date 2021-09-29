@@ -1,5 +1,5 @@
 ![](https://img.shields.io/badge/WSL-GUI-green) ![](https://img.shields.io/badge/Cygwin-XWin-orange) ![](https://img.shields.io/github/watchers/nufeng1999/wsl_XWin_Cygwin) <img alt="ViewCount" src="https://views.whatilearened.today/views/github/nufeng1999/wsl_XWin_Cygwin.svg">
-    <a href="https://github.com/nufeng1999/wsl_XWin_Cygwin"><img alt="GitHub Clones" src="https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://github.com/nufeng1999/wsl_XWin_Cygwin/blob/master/clone.json?raw=True&logo=github"></a>
+    <a href="https://github.com/nufeng1999/wsl_XWin_Cygwin"><img alt="GitHub Clones" src="https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://raw.githubusercontent.com/nufeng1999/wsl_XWin_Cygwin/master/clone.json&logo=github"></a>
 # wsl_XWin_Cygwin
 # Windows & Linux GUI Mix WSL Desktop app
 Using xwin_ Cygwin running WSL GUI
