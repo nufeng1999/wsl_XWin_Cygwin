@@ -50,9 +50,9 @@ gedit
 
 
 ***
-If you feel that these contents are helpful to you, you can make friendly sponsorship to developers.
+If you feel that these contents are helpful to you, you can make friendly sponsorship to developers.You may get more help after sponsorship
 
-如果你感觉这些内容对你有所帮助，可以向开发者进行友情赞助。
+如果你感觉这些内容对你有所帮助，可以向开发者进行友情赞助。赞助后你将可能获得更多帮助
 
 <img src="https://nufeng1999.github.io/imgs/wxzf.png"/>
 WeChat Pay（微信方式赞助）
