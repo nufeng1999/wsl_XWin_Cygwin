@@ -64,4 +64,4 @@ WeChat Pay（微信方式赞助）
 <img src="https://nufeng1999.github.io/imgs/zfbzf.png"/>
 Alipay（支付宝方式赞助）  
   
-<img src="https://nufeng1999.github.io/imgs/WSL_XWin_Cygwin.png"/>
+<img src="https://nufeng1999.github.io/imgs/img/WSL_XWin_Cygwin.png"/>
