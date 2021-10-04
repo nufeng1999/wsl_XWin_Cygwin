@@ -60,7 +60,8 @@ WSL_XWin_Cygwin
 
 <img src="https://nufeng1999.github.io/imgs/wxzf.png"/>
 WeChat Pay（微信方式赞助）
-
+  
 <img src="https://nufeng1999.github.io/imgs/zfbzf.png"/>
-Alipay（支付宝方式赞助）
-
+Alipay（支付宝方式赞助）  
+  
+<img src="https://nufeng1999.github.io/imgs/WSL_XWin_Cygwin.png"/>
