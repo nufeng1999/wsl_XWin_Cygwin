@@ -1,8 +1,8 @@
 ![](https://img.shields.io/badge/WSL-GUI-green) ![](https://img.shields.io/badge/Cygwin-XWin-orange) ![](https://img.shields.io/github/watchers/nufeng1999/wsl_XWin_Cygwin) <img alt="ViewCount" src="https://views.whatilearened.today/views/github/nufeng1999/wsl_XWin_Cygwin.svg">
     <a href="https://github.com/nufeng1999/wsl_XWin_Cygwin"><img alt="GitHub Clones" src="https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://raw.githubusercontent.com/nufeng1999/wsl_XWin_Cygwin/master/clone.json&logo=github"></a>
 # wsl_XWin_Cygwin
-# Windows & Linux GUI Mix WSL Desktop app
-Using xwin_ Cygwin running WSL GUI
+# Windows & Linux GUI Mix WSL Desktop app  
+Use Cygwin's xwin to run WSL GUI APP  
 
 ISwitch.exe --- Contrl app window maxsize,Resolving windows and WSL gui app input method conflicts
 
