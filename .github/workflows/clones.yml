@@ -3,7 +3,7 @@ name: GitHub Clone Count at every 12 hours
 # Controls when the action will run. 
 on:
   schedule:
-    - cron: "0 0 2 * *"
+    - cron: "0 */24 * * *"
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
