@@ -1,4 +1,9 @@
 #!/bin/bash
+ps -fe|grep fcitx |grep -v grep > /dev/null
+if [ $? -eq 0 ]; then  
+    return
+fi
+. /usr/bin/setresolv.sh
 alias code='/usr/share/code/code --no-sandbox --user-data-dir=.vscode'
 cd ~
 export DONT_PROMPT_WSL_INSTALL=1
@@ -8,14 +13,15 @@ export LC_LANG=zh_CN.UTF-8
 
 export LIBGL_ALWAYS_INDIRECT=
 export GDK_THEME=
-export GDK_SCALE=2
-export GDK_DPI_SCALE=1
-export ELM_SCALE=2
-export QT_SCALE_FACTOR=1
-export QT_FONT_DPI=144
-export QT_STYLE_OVERRIDE=adwaita
-#export QT_QPA_PLATFORMTHEME=gtk2
-#export DESKTOP_SESSION=gnome
+export XDG_SESSION_TYPE="x11"
+#export GDK_SCALE=2
+#export GDK_DPI_SCALE=1
+#export ELM_SCALE=2
+#export QT_SCALE_FACTOR=1
+#export QT_FONT_DPI=144
+#export QT_STYLE_OVERRIDE=adwaita
+export QT_QPA_PLATFORMTHEME=gtk2
+export DESKTOP_SESSION=gnome
 
 #GDK_SYNCHRONIZE
 #GDK_CORE_DEVICE_EVENTS
@@ -24,11 +30,16 @@ export QT_STYLE_OVERRIDE=adwaita
 #GDK_DEBUG
 #GTK_EXE_PREFIX
 #GTK_DATA_PREFIX
-export GTK_THEME=Adwaita:dark
+#export GTK_THEME=Adwaita-dark
+#export GTK_CURSOR_SIZE=48
+#export GTK_THEME=Greybird-dark
 #export HOSTIP=`nslookup w541|sed -n "1, 1p"|awk '{print $2}'`
 export HOSTIP=$(ip route | awk '/^default/{print $3; exit}')
 export DISPLAY=$HOSTIP:0.0
 export PULSE_SERVER=tcp:$HOSTIP
+
+local_ip=`/sbin/ifconfig -a|grep inet|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:"`
+/mnt/c/WINDOWS/System32/cmd.exe /C setx WSLHOSTIP $local_ip  > /dev/null 
 
 #DESKTOP_STARTUP_ID
 #XDG_DATA_HOME
@@ -53,6 +64,9 @@ export QT_IM_MODULE=fcitx
 /usr/bin/startXServer
 export PATH=/opt/dart-sdk/bin:/opt/flutter/bin:$PATH
 
-
+gsettings set org.gnome.desktop.interface scaling-factor 2
+gsettings set org.gnome.settings-daemon.plugins.xsettings overrides "{'Gdk/WindowScalingFactor': <2>}"
+#xrandr --output DP-1 --scale 1.5x1.5
+#xrandr --output DP-1 --panning 3840x2160
 
 alias reboot='sudo /usr/bin/reboot'
