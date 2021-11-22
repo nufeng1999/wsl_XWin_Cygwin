@@ -39,6 +39,7 @@ export DISPLAY=$HOSTIP:0.0
 export PULSE_SERVER=tcp:$HOSTIP
 
 local_ip=`/sbin/ifconfig -a|grep inet|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:"`
+local_hostname=`hostname`
 /mnt/c/WINDOWS/System32/cmd.exe /C setx WSLHOSTIP $local_ip  > /dev/null 2>&1 
 #update Windows C:\Windows\System32\drivers\etc\hosts hostname 
 sed -i "/ $local_hostname/d" /mnt/c/WINDOWS/System32/drivers/etc/hosts
@@ -64,11 +65,11 @@ export GTK_IM_MODULE=fcitx
 export QT_IM_MODULE=fcitx
 /usr/bin/wslfcitx
 
-/usr/bin/startXServer
+/usr/bin/startXServer  > /dev/null 2>&1 &
 export PATH=/opt/dart-sdk/bin:/opt/flutter/bin:$PATH
 
-gsettings set org.gnome.desktop.interface scaling-factor 2
-gsettings set org.gnome.settings-daemon.plugins.xsettings overrides "{'Gdk/WindowScalingFactor': <2>}"
+gsettings set org.gnome.desktop.interface scaling-factor 2 > /dev/null 2>&1 &
+gsettings set org.gnome.settings-daemon.plugins.xsettings overrides "{'Gdk/WindowScalingFactor': <2>}" 2 > /dev/null 2>&1 &
 #xrandr --output DP-1 --scale 1.5x1.5
 #xrandr --output DP-1 --panning 3840x2160
 
