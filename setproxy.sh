@@ -21,3 +21,4 @@ gsettings set org.gnome.system.proxy.https host http://$HOSTIP
 gsettings set org.gnome.system.proxy.https port 1080
 gsettings set org.gnome.system.proxy.ftp host http://$HOSTIP
 gsettings set org.gnome.system.proxy.ftp port 1080
+gsettings set org.gnome.system.proxy mode 'manual'
