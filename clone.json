@@ -1,56 +1,11 @@
 {
-  "count": 155,
-  "uniques": 64,
+  "count": 117,
+  "uniques": 65,
   "clones": [
     {
-      "timestamp": "2021-11-09T00:00:00Z",
-      "count": 5,
-      "uniques": 3
-    },
-    {
-      "timestamp": "2021-11-10T00:00:00Z",
-      "count": 7,
-      "uniques": 6
-    },
-    {
-      "timestamp": "2021-11-11T00:00:00Z",
-      "count": 6,
-      "uniques": 5
-    },
-    {
-      "timestamp": "2021-11-12T00:00:00Z",
-      "count": 12,
-      "uniques": 8
-    },
-    {
-      "timestamp": "2021-11-13T00:00:00Z",
-      "count": 15,
-      "uniques": 9
-    },
-    {
-      "timestamp": "2021-11-14T00:00:00Z",
-      "count": 8,
-      "uniques": 4
-    },
-    {
-      "timestamp": "2021-11-15T00:00:00Z",
-      "count": 29,
-      "uniques": 13
-    },
-    {
-      "timestamp": "2021-11-16T00:00:00Z",
-      "count": 11,
-      "uniques": 7
-    },
-    {
-      "timestamp": "2021-11-17T00:00:00Z",
-      "count": 11,
-      "uniques": 6
-    },
-    {
       "timestamp": "2021-11-18T00:00:00Z",
-      "count": 10,
-      "uniques": 7
+      "count": 7,
+      "uniques": 5
     },
     {
       "timestamp": "2021-11-19T00:00:00Z",
@@ -71,6 +26,51 @@
       "timestamp": "2021-11-22T00:00:00Z",
       "count": 21,
       "uniques": 15
+    },
+    {
+      "timestamp": "2021-11-23T00:00:00Z",
+      "count": 13,
+      "uniques": 7
+    },
+    {
+      "timestamp": "2021-11-24T00:00:00Z",
+      "count": 5,
+      "uniques": 4
+    },
+    {
+      "timestamp": "2021-11-25T00:00:00Z",
+      "count": 7,
+      "uniques": 4
+    },
+    {
+      "timestamp": "2021-11-26T00:00:00Z",
+      "count": 7,
+      "uniques": 6
+    },
+    {
+      "timestamp": "2021-11-27T00:00:00Z",
+      "count": 11,
+      "uniques": 8
+    },
+    {
+      "timestamp": "2021-11-28T00:00:00Z",
+      "count": 6,
+      "uniques": 5
+    },
+    {
+      "timestamp": "2021-11-29T00:00:00Z",
+      "count": 8,
+      "uniques": 7
+    },
+    {
+      "timestamp": "2021-11-30T00:00:00Z",
+      "count": 6,
+      "uniques": 5
+    },
+    {
+      "timestamp": "2021-12-01T00:00:00Z",
+      "count": 6,
+      "uniques": 6
     }
   ]
 }
