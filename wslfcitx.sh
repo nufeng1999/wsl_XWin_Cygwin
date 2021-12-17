@@ -1,6 +1,5 @@
 #!/bin/bash
 #export DISPLAY=127.0.0.1:0.0
-
 PROC_NAME=fcitx
 ProcNumber=`ps -ef |grep -w $PROC_NAME|grep -v grep|wc -l`
 if [ $ProcNumber -le 0 ];then
@@ -14,6 +13,3 @@ if [ $ProcNumber -le 0 ];then
 	cd
 	/usr/bin/fcitx -d -r >/dev/null 2>&1 &
 fi
-eval $(/usr/bin/gnome-keyring-daemon --start --components=gpg,pkcs11,secrets,ssh)
-# export keyring
-export GNOME_KEYRING_CONTROL GNOME_KEYRING_PID GPG_AGENT_INFO SSH_AUTH_SOCK
