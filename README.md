@@ -15,8 +15,9 @@ ISwitch.exe -s  --- Move task to background( default -c -w)
 [![Watch the video](https://github.com/nufeng74/wsl_XWin_Cygwin/blob/main/20210612_071703.gif?raw=true)](https://youtu.be/iy8j-fD82aQ)
 
 # Install
-Executing Windows terminal with administrator
+Executing Windows terminal with administrator  
 
+'''
 apt install gedit fcitx fcitx-config-gtk  fcitx-sunpinyin fcitx-pinyin  fcitx-googlepinyin xfonts-intl-chinese
 
 apt install xfonts-wqy xfonts-unifont fonts-wqy*
@@ -38,18 +39,22 @@ git clone git://github.com/nufeng1999/wsl_XWin_Cygwin.git --recurse-submodules
 cd wsl_XWin_Cygwin
 
 chmod +x ./install.sh;./install.sh
+'''
 # Close WSL
 DOS/PowerShell
 
+'''
 wsl --shutdown
+'''
 
 # reopening WSL
+'''
 wsl -u root -d Ubuntu
-
+'''
 execute X11 App 
-
+'''
 gedit
-
+'''
 
 ***
 If you feel that these contents are helpful to you, you can make friendly sponsorship to developers.You may get more help after sponsorship
