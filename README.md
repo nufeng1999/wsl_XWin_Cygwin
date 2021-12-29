@@ -18,7 +18,7 @@ ISwitch.exe -s  --- Move task to background( default -c -w)
 Executing Windows terminal with administrator  
 
 ```
-apt install gedit fcitx fcitx-config-gtk  fcitx-sunpinyin fcitx-pinyin  fcitx-googlepinyin xfonts-intl-chinese
+apt install net-tools gedit fcitx fcitx-config-gtk  fcitx-sunpinyin fcitx-pinyin  fcitx-googlepinyin xfonts-intl-chinese
 
 apt install xfonts-wqy xfonts-unifont fonts-wqy*
 
