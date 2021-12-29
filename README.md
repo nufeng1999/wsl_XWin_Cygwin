@@ -15,7 +15,11 @@ ISwitch.exe -s  --- Move task to background( default -c -w)
 [![Watch the video](https://github.com/nufeng74/wsl_XWin_Cygwin/blob/main/20210612_071703.gif?raw=true)](https://youtu.be/iy8j-fD82aQ)
 
 # Install
-Executing Windows terminal with administrator  
+Important Notice :
+1.Executing Windows terminal with administrator
+2.Executing WSL with root (wsl -u root -d Ubuntu )
+
+su - root
 
 ```
 apt install net-tools gedit fcitx fcitx-config-gtk  fcitx-sunpinyin fcitx-pinyin  fcitx-googlepinyin xfonts-intl-chinese
