@@ -27,6 +27,7 @@ ln -sf $PWD/setresolv.sh /usr/bin/setresolv.sh
 ln -sf $PWD/restartudev.sh /usr/bin/restartudev
 ln -sf $PWD/docker-service.sh /usr/bin/docker-service
 ln -sf $PWD/start-xfce4-panel.sh /usr/bin/start-xfce4-panel
+ln -sf $PWD/start-xfce4.sh /usr/bin/start-xfce4
 
 chmod +x /usr/bin/setguienv
 chmod +x /usr/bin/setproxy
