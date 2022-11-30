@@ -11,7 +11,7 @@ ISwitch.exe -w  --- Contrl app window maxsize
 
 ISwitch.exe -s  --- Move task to background( default -c -w)  
 
-[![Watch the video](https://github.com/nufeng74/wsl_XWin_Cygwin/blob/main/20210612_071703.gif?raw=true)](https://youtu.be/iy8j-fD82aQ)  
+[![Watch the video](https://github.com/nufeng1999/wsl_XWin_Cygwin/blob/main/20210612_071703.gif?raw=true)](https://youtu.be/iy8j-fD82aQ)  
 
 ![](https://github.com/nufeng1999/imgs/blob/main/img/20211115_110932.gif?raw=true)
 ![](https://github.com/nufeng1999/imgs/blob/main/img/20211115_111705.gif?raw=true)
@@ -21,15 +21,20 @@ ISwitch.exe -s  --- Move task to background( default -c -w)
 Important Notice :  
 1.Executing Windows terminal with administrator  
 2.Executing WSL with root (wsl -u root -d Ubuntu )  
-  
-su - root  
+## Powershell /DOS  
+notepad %USERPROFILE%\.wslconfig     
+[wsl2]  
+guiApplications=false   
+
+## WSL  
+su - root    
 
 apt install net-tools hwdata gedit  
 apt install fcitx fcitx-config-gtk  fcitx-sunpinyin fcitx-pinyin  fcitx-googlepinyin xfonts-intl-chinese  
 apt install xfonts-wqy xfonts-unifont fonts-wqy*  
   
 ##It depends on the version  
-apt install linux-tools-5.4.0-77-generic  
+apt install linux-tools-generic  
 
 apt install language-pack-gnome-zh-hans language-pack-kde-zh-hans language-pack-zh-hans  
 apt install daemonize gdm3 gnome 
@@ -75,14 +80,16 @@ wsl -u root -d Ubuntu
 ~~wsl2-systemd~~  
 ~~gnome-session &~~   
 
-startgnome2
-
+startgnome2  
+// other user execute gnome  
+. setguienv  
+startgnome2  
 
 ***
 If you feel that these contents are helpful to you, you can make friendly sponsorship to developers.You may get more help after sponsorship
 
 如果你感觉这些内容对你有所帮助，可以向开发者进行友情赞助。赞助后你将可能获得更多帮助。  
-群名称：  
+技术支持赞助群名称：  
 WSL_XWin_Cygwin  
 群   号：  
 1014866104  
@@ -94,4 +101,4 @@ WeChat Pay（微信方式赞助）
 Alipay（支付宝方式赞助）  
   
 <img src="https://nufeng1999.github.io/imgs/img/WSL_XWin_Cygwin.png"/>  
-QQ群
+QQ技术支持赞助群
